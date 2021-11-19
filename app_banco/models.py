@@ -32,8 +32,8 @@ class Transaccion(models.Model):
     )
     fecha = models.DateTimeField(auto_now_add=True)
     movimiento = models.CharField(max_length=1, choices=MOVIMIENTOS)
-    origen = models.ForeignKey(Cuenta, related_name='origen', on_delete=models.CASCADE)
-    destino = models.ForeignKey(Cuenta, related_name='destino', on_delete=models.CASCADE, null=True, blank=True)
+    origen = models.ForeignKey(Cuenta, related_name='origen retirable+', on_delete=models.CASCADE)
+    destino = models.ForeignKey(Cuenta, related_name='destino retirable+', on_delete=models.CASCADE, null=True, blank=True)
     monto = models.FloatField(null=True, blank=True)
     comentario = models.TextField(null=True, blank=True)
 
@@ -43,6 +43,52 @@ class Transaccion(models.Model):
     class Meta:
         verbose_name_plural = 'Transacciones'
 
+class Transaccion_Aportaciones(models.Model):
+    MOVIMIENTOS = (
+        ('1', 'Deposito'),
+        ('2', 'Retiro'),
+        ('3', 'Transferencia'),
+    )
+    fecha = models.DateTimeField(auto_now_add=True)
+    movimiento = models.CharField(max_length=1, choices=MOVIMIENTOS)
+    origen = models.ForeignKey(Cuenta, related_name='origen aportaciones+', on_delete=models.CASCADE)
+    destino = models.ForeignKey(Cuenta, related_name='destino aportaciones+', on_delete=models.CASCADE, null=True, blank=True)
+    monto = models.FloatField(null=True, blank=True)
+    comentario = models.TextField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # Trigger al guardar
+        h = Transaccion_Aportaciones_Historial(monto=self.monto,comentario=self.comentario,movimiento=self.movimiento,origen=self.origen,destino=self.destino)
+        h.save()
+        return super(Transaccion_Aportaciones, self).save(*args, **kwargs) # Save original
+
+    def delete(self, *args,**kwargs):
+        h = Transaccion_Aportaciones_Historial(monto=self.monto,comentario=self.comentario,movimiento=self.movimiento,origen=self.origen,destino=self.destino)
+        h.save()
+        return super(Transaccion_Aportaciones, self).delete(*args, **kwargs)  # Save original
+
+    def __str__(self):
+        return f'{self.get_movimiento_display()} - {self.monto}'
+
+    class Meta:
+        verbose_name_plural = 'Transacciones de aportaciones'
 
 
+class Transaccion_Aportaciones_Historial(models.Model):
+    MOVIMIENTOS = (
+        ('1', 'Deposito'),
+        ('2', 'Retiro'),
+        ('3', 'Transferencia'),
+    )
+    fecha = models.DateTimeField(auto_now_add=True)
+    movimiento = models.CharField(max_length=1, choices=MOVIMIENTOS)
+    origen = models.ForeignKey(Cuenta, related_name='origen aportaciones historial+', on_delete=models.DO_NOTHING)
+    destino = models.ForeignKey(Cuenta, related_name='destino aportaciones historial+', on_delete=models.DO_NOTHING, null=True, blank=True)
+    monto = models.FloatField(null=True, blank=True)
+    comentario = models.TextField(null=True, blank=True)
 
+    def __str__(self):
+        return f'{self.get_movimiento_display()} - {self.monto}'
+
+    class Meta:
+        verbose_name_plural = 'Transacciones de aportaciones historial'
