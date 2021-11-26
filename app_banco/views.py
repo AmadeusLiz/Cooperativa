@@ -273,7 +273,7 @@ def historial(request):
 
             sum_depositos = transacciones.filter(movimiento='1').aggregate(t=Sum('monto'))['t']
             sum_retiros = transacciones.filter(movimiento='2').aggregate(t=Sum('monto'))['t']
-            # saldo_actual  = sum_depositos - sum_retiros
+            saldo_actual  = sum_depositos - (sum_retiros if sum_retiros is not None else 0)
 
             if not transacciones:
                 html = '<div class="alert alert-danger">No hay movimientos para esta cuenta</div>'
@@ -323,7 +323,7 @@ def historial(request):
                             </tr>
                         '''
 
-            color_saldo_actual = 'text-danger'  # if saldo_actual <= 0 else 'text-success'
+            color_saldo_actual = 'text-danger' if saldo_actual <= 0 else 'text-success'
 
             html = f'''
                 <table class="table table-bordered table-striped table-hover">
@@ -340,7 +340,7 @@ def historial(request):
                         <tr>
                             <th class="table-secondary"></th>
                             <th class="table-secondary"></th>
-                            <th class="table-secondary text-danger text-end">{sum_retiros}</th>
+                            <th class="table-secondary text-danger text-end">{sum_retiros if sum_retiros is not None else 0}</th>
                             <th class="table-secondary text-success text-end">{sum_depositos}</th>
                         </tr>
                         <tr>
