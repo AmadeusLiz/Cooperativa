@@ -261,13 +261,14 @@ def historial(request):
         if request.method == 'POST' and request.is_ajax():
             cuenta_id = request.POST.get('cbo-cuenta')
             cuenta = Cuenta.objects.get(pk=cuenta_id)
+            print(cuenta_id)
 
             # consultar las movimientos de la cuenta
-            transacciones = Transaccion.objects.filter(Q(origen__id=cuenta_id) | Q(destino__id=cuenta_id)).order_by('-fecha')
+            transacciones = Transaccion.objects.filter(Q(origen__id=cuenta_id) or Q(destino__id=cuenta_id)).order_by('-fecha')
 
             sum_depositos = transacciones.filter(movimiento='1').aggregate(t=Sum('monto'))['t']
             sum_retiros   = transacciones.filter(movimiento='2').aggregate(t=Sum('monto'))['t']
-            saldo_actual  = sum_depositos - sum_retiros
+            #saldo_actual  = sum_depositos - sum_retiros
 
             if not transacciones:
                 html = '<div class="alert alert-danger">No hay movimientos para esta cuenta</div>'
@@ -317,7 +318,7 @@ def historial(request):
                             </tr>
                         '''
 
-            color_saldo_actual = 'text-danger' if saldo_actual <= 0 else 'text-success'
+            color_saldo_actual = 'text-danger' #if saldo_actual <= 0 else 'text-success'
 
             html = f'''
                 <table class="table table-bordered table-striped table-hover">
@@ -339,7 +340,7 @@ def historial(request):
                         </tr>
                         <tr>
                             <th class="table-dark"></th>
-                            <th colspan="3" class="table-dark text-white text-end {color_saldo_actual}">Saldo actual: {saldo_actual}</th>
+                            <th colspan="3" class="table-dark text-white text-end {color_saldo_actual}">Saldo actual: {cuenta.saldo}</th>
                         </tr>
                     </tfoot>
                 </table>
