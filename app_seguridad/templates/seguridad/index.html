@@ -103,7 +103,7 @@
         <main class="form-signin">
             <form action="{% url 'login_view' %}" method="post">
                 {% csrf_token %}
-                <img class="mb-4" src="https://upload.wikimedia.org/wikipedia/en/d/d0/Dogecoin_Logo.png" alt="" width="100">
+                <img class="mb-4" src="{% static 'seguridad/img/icon_color.png' %}" alt="" width="100">
                 <h1 class="h3 mb-3 fw-normal">Inicia sesión aquí</h1>
 
                 <div class="form-floating">
