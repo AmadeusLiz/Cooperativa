@@ -1,5 +1,30 @@
 from django import forms
 from .models import Cliente
+from django.contrib.auth.models import User
+
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = '__all__'
+        exclude = ('last_login'\
+                       ,'is_superuser'\
+                       ,'last_name'\
+                       ,'email'\
+                       ,'is_staff'\
+                       ,'is_active'\
+                       ,'date_joined'\
+                       ,'first_name'\
+                       ,'groups'\
+                       ,'user_permissions'\
+                       ,)
+
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'password': forms.PasswordInput(attrs={'class': 'form-control', 'type':'password'})
+
+        }
+
+
 
 class ClienteForm(forms.ModelForm):
     class Meta:

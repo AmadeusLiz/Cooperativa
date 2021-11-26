@@ -8,10 +8,21 @@
     <div class="col-4">
         {% if request.GET.id %}
         <form action="{% url 'clientes_actualizar' request.GET.id %}" method="post">
+            {% csrf_token %}
         {% else %}
         <form action="{% url 'clientes_gestion' %}" method="post">
-        {% endif %}
             {% csrf_token %}
+            <p>
+                <label for="username">Nombre de Usuario</label>
+            {{ formu.username}}
+            </p>
+            <p>
+                <label for="password">Contraseña</label>
+            {{ formu.password}}
+            </p>
+        {% endif %}
+
+
 
             {{ form.as_p }}
 
@@ -39,7 +50,7 @@
                     <td>{{ cli.telefono }}</td>
                     <td>{{ cli.correo }}</td>
                     <td>
-                        <a href="{% url 'clientes_view' %}?id={{ cli.id}}">Editar</a>
+                        <a href="{% url 'clientes_view' %}?id={{cli.id}}">Editar</a>
                     </td>
                 </tr>
             {% empty %}
@@ -51,5 +62,18 @@
         </table>
     </div>
 </div>
+    <br>
+    {% if messages %}
+        {% if messages.ERROR %}
+                <div class="alert alert-danger mb-3">
+                {% else %}
+                <div class="alert alert-success mb-3">
+                {% endif %}
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+
+    {% endif %}
 
 {% endblock %}

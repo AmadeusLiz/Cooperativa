@@ -39,14 +39,14 @@ class ClienteHistorial(models.Model):
         ('1', 'Guardar'),
         ('2', 'Borrar'),
     )
-    nombre = models.CharField(max_length=25)
-    apellido = models.CharField(max_length=25)
-    direccion = models.TextField()
-    fecha_nacimiento = models.DateField()
-    telefono = models.CharField(max_length=9)
-    correo = models.EmailField(max_length=25)
+    nombre = models.CharField(max_length=25,null=True)
+    apellido = models.CharField(max_length=25,null=True)
+    direccion = models.TextField(null=True)
+    fecha_nacimiento = models.DateField(null=True)
+    telefono = models.CharField(max_length=9,null=True)
+    correo = models.EmailField(max_length=25,null=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-    accion = models.CharField(max_length=1, choices=ACCIONES)
+    accion = models.CharField(max_length=1, choices=ACCIONES,null=True)
 
 
 class Cuenta(models.Model):

@@ -1,3 +1,5 @@
+from django.contrib import messages
+from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse, Http404
 from django.db import transaction
@@ -6,19 +8,20 @@ from django.core.mail import EmailMessage
 from django.urls import reverse
 from .models import Cuenta, Transaccion, Cliente
 from datetime import datetime
-from .forms import ClienteForm
+from .forms import ClienteForm, UserForm
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 
 def home(request):
     if request.is_ajax() and request.method == 'POST':
         accion = request.POST.get('cbo-transaccion')
 
-        if accion == '1': # deposito
+        if accion == '1':  # deposito
             cuenta_id = request.POST.get('cbo-cuenta')
             monto = int(request.POST.get('txt-monto'))
 
             if monto <= 0:
                 return JsonResponse({'color': 'warn', 'msj': 'El monto ingresado no es valido'})
-
 
             # para que los cambios sean permanentes se aplica: commit
             # para deshacer los cambios por algun error se aplica: rollback
@@ -29,19 +32,20 @@ def home(request):
                     cuenta = Cuenta.objects.get(pk=cuenta_id)
 
                     if not cuenta.estado:
-                        return JsonResponse({'color': 'warn', 'msj': 'La cuenta a la que desea depositar está inactiva'})
+                        return JsonResponse(
+                            {'color': 'warn', 'msj': 'La cuenta a la que desea depositar está inactiva'})
 
                     # Depositar el monto en la cuenta
                     cuenta.saldo += float(monto)
                     cuenta.save()
 
-                    #raise Exception('Este es un error provocado intencionalmente')
+                    # raise Exception('Este es un error provocado intencionalmente')
 
                     # Registrar el movimiento en Transaccion
                     Transaccion.objects.create(
-                        movimiento = '1', # Deposito
-                        origen = cuenta,
-                        monto = float(monto)
+                        movimiento='1',  # Deposito
+                        origen=cuenta,
+                        monto=float(monto)
                     )
 
                     # Enviar el correo
@@ -55,26 +59,27 @@ def home(request):
 
                             Fecha de la transaccion: {hoy}
                             '''
-                            
-                            correo = EmailMessage('Django - Notificación de depósito', body, 'info@finapp.com', [cuenta.cliente.correo])
-                            #correo.attach_file('ruta/del/archivo.pdf')
+
+                            correo = EmailMessage('Django - Notificación de depósito', body, 'info@finapp.com',
+                                                  [cuenta.cliente.correo])
+                            # correo.attach_file('ruta/del/archivo.pdf')
                             correo.send()
                         except:
                             pass
 
-                    return JsonResponse({'color': 'success', 'msj': f'El deposito ha sido realizado: Saldo actual: {cuenta.saldo}'})
-                
+                    return JsonResponse(
+                        {'color': 'success', 'msj': f'El deposito ha sido realizado: Saldo actual: {cuenta.saldo}'})
+
                 except Exception as e:
                     return JsonResponse({'color': 'error', 'msj': str(e)})
 
 
-        elif accion == '2': # retiro
+        elif accion == '2':  # retiro
             cuenta_id = request.POST.get('cbo-cuenta')
             monto = int(request.POST.get('txt-monto'))
 
             # if monto <= 0:
             #     return JsonResponse({'color': 'warn', 'msj': 'El monto ingresado no es valido'})
-
 
             # para que los cambios sean permanentes se aplica: commit
             # para deshacer los cambios por algun error se aplica: rollback
@@ -86,24 +91,24 @@ def home(request):
 
                     # Verificar que la cuenta no esta activa
                     if not cuenta.estado:
-                        return JsonResponse({'color': 'warn', 'msj': 'La cuenta a la que desea depositar está inactiva'})
+                        return JsonResponse(
+                            {'color': 'warn', 'msj': 'La cuenta a la que desea depositar está inactiva'})
 
                     # Verificar que la cuenta tenga saldo suficiente
                     # if cuenta.saldo < monto:
                     #     return JsonResponse({'color': 'warn', 'msj': f'La cuenta no tiene saldo suficiente. Saldo actual: {cuenta.saldo:,}'})
 
-
                     # Depositar el monto en la cuenta
                     cuenta.saldo -= float(monto)
                     cuenta.save()
 
-                    #raise Exception('Este es un error provocado intencionalmente')
+                    # raise Exception('Este es un error provocado intencionalmente')
 
                     # Registrar el movimiento en Transaccion
                     Transaccion.objects.create(
-                        movimiento = '2',
-                        origen = cuenta,
-                        monto = float(monto)
+                        movimiento='2',
+                        origen=cuenta,
+                        monto=float(monto)
                     )
 
                     tag = ''
@@ -117,21 +122,22 @@ def home(request):
 
                             Fecha de la transacción: {hoy}
                             '''
-                            
-                            correo = EmailMessage('Django - Notificación de retiro', body, 'info@finapp.com', [cuenta.cliente.correo])
-                            #correo.attach_file('ruta/del/archivo.pdf')
+
+                            correo = EmailMessage('Django - Notificación de retiro', body, 'info@finapp.com',
+                                                  [cuenta.cliente.correo])
+                            # correo.attach_file('ruta/del/archivo.pdf')
                             correo.send()
                             tag = 'Correo enviado'
                         except:
                             tag = 'No se pudo enviar el correo'
 
                     return JsonResponse({'color': 'success', 'msj': f'El retiro ha sido realizado con éxito ({tag})'})
-                
+
                 except Exception as e:
                     return JsonResponse({'color': 'error', 'msj': str(e)})
 
-        
-        else: # transferencia
+
+        else:  # transferencia
             pass
 
     # GET
@@ -143,10 +149,10 @@ def home(request):
         cuentas_propias = None
 
     ctx = {
-        'cuentas': cuentas,                     # es para el super user
-        'cuentas_propias': cuentas_propias,     # es para el cliente
+        'cuentas': cuentas,  # es para el super user
+        'cuentas_propias': cuentas_propias,  # es para el cliente
     }
-    
+
     return render(request, 'banco/index.html', ctx)
 
 
@@ -190,12 +196,11 @@ def transferencias_view(request):
                 info = 'El número de cuenta destino no existe'
                 color = 'error'
 
-
             return JsonResponse({'color': color, 'msj': info})
 
-        else: # finalizar
+        else:  # finalizar
             destino_id = request.POST.get('cuenta-destino')
-            origen_id  = request.POST.get('cuenta-origen')
+            origen_id = request.POST.get('cuenta-origen')
             monto = float(request.POST.get('monto'))
             comentario = request.POST.get('comentario')
 
@@ -211,12 +216,12 @@ def transferencias_view(request):
                 if cuenta_origen.saldo < monto:
                     OK, msj = False, 'La cuenta no tiene suficiente saldo para realizar la transferencia'
                     return JsonResponse({'OK': OK, 'msj': msj})
-            
+
                 # validar que la cuenta destino esta activa
                 if not cuenta_destino.estado:
                     OK, msj = False, 'No se puede realizar la transferencia a la cuenta destino'
                     return JsonResponse({'OK': OK, 'msj': msj})
-                
+
                 # Las validaciones pasaron, realizamos la transaccion
                 try:
                     with transaction.atomic():
@@ -224,20 +229,19 @@ def transferencias_view(request):
                         cuenta_origen.saldo -= monto
                         cuenta_origen.save()
 
-                        #raise Exception('Este error es intencional')
+                        # raise Exception('Este error es intencional')
 
                         # credito en la cuenta destino
                         cuenta_destino.saldo += monto
                         cuenta_destino.save()
 
-
                         # registrar el movimiento
                         Transaccion.objects.create(
-                            movimiento = '3', # Transferencia
-                            origen = cuenta_origen,
-                            destino = cuenta_destino,
-                            monto = float(monto),
-                            comentario = comentario
+                            movimiento='3',  # Transferencia
+                            origen=cuenta_origen,
+                            destino=cuenta_destino,
+                            monto=float(monto),
+                            comentario=comentario
                         )
 
                         # en un try
@@ -253,8 +257,8 @@ def transferencias_view(request):
             else:
                 OK, msj = False, 'Hay error en las cuentas, por favor verifique'
 
-
             return JsonResponse({'msj': origen_id})
+
 
 def historial(request):
     if request.user.is_superuser:
@@ -264,19 +268,20 @@ def historial(request):
             print(cuenta_id)
 
             # consultar las movimientos de la cuenta
-            transacciones = Transaccion.objects.filter(Q(origen__id=cuenta_id) or Q(destino__id=cuenta_id)).order_by('-fecha')
+            transacciones = Transaccion.objects.filter(Q(origen__id=cuenta_id) or Q(destino__id=cuenta_id)).order_by(
+                '-fecha')
 
             sum_depositos = transacciones.filter(movimiento='1').aggregate(t=Sum('monto'))['t']
-            sum_retiros   = transacciones.filter(movimiento='2').aggregate(t=Sum('monto'))['t']
-            #saldo_actual  = sum_depositos - sum_retiros
+            sum_retiros = transacciones.filter(movimiento='2').aggregate(t=Sum('monto'))['t']
+            # saldo_actual  = sum_depositos - sum_retiros
 
             if not transacciones:
                 html = '<div class="alert alert-danger">No hay movimientos para esta cuenta</div>'
-                return JsonResponse({'html': html}) 
+                return JsonResponse({'html': html})
 
             tr = ''
             for trans in transacciones:
-                if trans.movimiento == '1': # Depositos
+                if trans.movimiento == '1':  # Depositos
                     tr += f'''
                         <tr>
                             <td>{trans.fecha}</td>
@@ -286,7 +291,7 @@ def historial(request):
                         </tr>
                     '''
 
-                elif trans.movimiento == '2': # Retiros
+                elif trans.movimiento == '2':  # Retiros
                     tr += f'''
                         <tr>
                             <td>{trans.fecha}</td>
@@ -296,7 +301,7 @@ def historial(request):
                         </tr>
                     '''
 
-                else: # Transferencias
+                else:  # Transferencias
                     if cuenta == trans.origen:
                         # la cuenta está en el campo origen: debito por transferencia
                         tr += f'''
@@ -318,7 +323,7 @@ def historial(request):
                             </tr>
                         '''
 
-            color_saldo_actual = 'text-danger' #if saldo_actual <= 0 else 'text-success'
+            color_saldo_actual = 'text-danger'  # if saldo_actual <= 0 else 'text-success'
 
             html = f'''
                 <table class="table table-bordered table-striped table-hover">
@@ -349,37 +354,56 @@ def historial(request):
             return JsonResponse({'html': html})
     else:
         raise Http404('Not Found')
-    
-    
-    
+
     # este es el metodo GET
     cuentas = Cuenta.objects.all()
     return render(request, 'banco/historial.html', {'cuentas': cuentas})
 
+
 def clientes_view(request):
     id = request.GET.get('id')
-    
+    usuario = None
     cliente = None
     if id:
         cliente = get_object_or_404(Cliente, pk=id)
 
-    form = ClienteForm(instance=cliente) # instancia
+    formu = UserForm(instance=usuario)
+    form = ClienteForm(instance=cliente)  # instancia
     clientes = Cliente.objects.all().order_by('nombre', 'apellido')
-    return render(request, 'banco/clientes.html', {'form': form, 'clientes': clientes})
+    return render(request, 'banco/clientes.html', {'form': form, 'formu': formu, 'clientes': clientes})
 
-def clientes_gestion(request, id = None):
+
+def clientes_gestion(request, id=None):
     if request.method == 'POST':
+
+        u = UserForm(request.POST)
         cliente = get_object_or_404(Cliente, pk=id) if id else None
         form = ClienteForm(request.POST, instance=cliente)
+
 
         # form.save() hará un update si la instancia es un objeto del cliente que se quiere actualizar
         # form.save() hará un insert si la instancia es nula (None)
 
         if form.is_valid():
-            form.save()
+            try:
+                u.save()
+                ultimo = User.objects.all().order_by('-id')
+                form.user = ultimo.first().id
+
+                form.save()
+
+                t = Cliente.objects.all().order_by('-id').first()
+                print(t)
+                t.user_id = ultimo.first().id
+                t.save()
+                Cuenta.objects.create(cliente_id=t.id,tipo='1')
+                Cuenta.objects.create(cliente_id=t.id, tipo='2')
+                messages.add_message(request, messages.SUCCESS, f'Socio añadido con exito')
+            except Exception as e:
+                messages.add_message(request, messages.ERROR, f'El nombre de usuario ya existe')
+                print(e)
+
             return redirect(reverse('clientes_view'))
         else:
             clientes = Cliente.objects.all().order_by('nombre', 'apellido')
             return render(request, 'banco/clientes.html', {'form': form, 'clientes': clientes})
-
-
