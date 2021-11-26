@@ -407,3 +407,48 @@ def clientes_gestion(request, id=None):
         else:
             clientes = Cliente.objects.all().order_by('nombre', 'apellido')
             return render(request, 'banco/clientes.html', {'form': form, 'clientes': clientes})
+
+def clientes_credito(request, id=None):
+    # id = request.GET.get('id')
+    # usuario = None
+    # cliente = None
+    # if id:
+    #     cliente = get_object_or_404(Cliente, pk=id)
+
+    # formu = UserForm(instance=usuario)
+    # form = ClienteForm(instance=cliente)  # instancia
+    # clientes = Cliente.objects.all().order_by('nombre', 'apellido')
+    # return render(request, 'banco/clientes.html', {'form': form, 'formu': formu, 'clientes': clientes})
+    if request.method == 'POST':
+
+        u = UserForm(request.POST)
+        cliente = get_object_or_404(Cliente, pk=id) if id else None
+        form = ClienteForm(request.POST, instance=cliente)
+
+
+        # form.save() hará un update si la instancia es un objeto del cliente que se quiere actualizar
+        # form.save() hará un insert si la instancia es nula (None)
+
+        if form.is_valid():
+            try:
+                u.save()
+                ultimo = User.objects.all().order_by('-id')
+                form.user = ultimo.first().id
+
+                form.save()
+
+                t = Cliente.objects.all().order_by('-id').first()
+                print(t)
+                t.user_id = ultimo.first().id
+                t.save()
+                Cuenta.objects.create(cliente_id=t.id,tipo='1')
+                Cuenta.objects.create(cliente_id=t.id, tipo='2')
+                messages.add_message(request, messages.SUCCESS, f'Socio añadido con exito')
+            except Exception as e:
+                messages.add_message(request, messages.ERROR, f'El nombre de usuario ya existe')
+                print(e)
+
+            return redirect(reverse('clientes_view'))
+        else:
+            clientes = Cliente.objects.all().order_by('nombre', 'apellido')
+            return render(request, 'banco/clientes.html', {'form': form, 'clientes': clientes})
