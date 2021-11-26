@@ -269,7 +269,6 @@ def historial(request):
             sum_retiros   = transacciones.filter(movimiento='2').aggregate(t=Sum('monto'))['t']
             saldo_actual  = sum_depositos - sum_retiros
 
-
             if not transacciones:
                 html = '<div class="alert alert-danger">No hay movimientos para esta cuenta</div>'
                 return JsonResponse({'html': html}) 
