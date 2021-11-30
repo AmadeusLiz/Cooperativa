@@ -8,7 +8,7 @@ from django.core.mail import EmailMessage
 from django.urls import reverse
 from .models import Cuenta, Transaccion, Cliente
 from datetime import datetime
-from .forms import ClienteForm, UserForm
+from .forms import ClienteForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 
@@ -362,30 +362,29 @@ def historial(request):
 
 def clientes_view(request):
     id = request.GET.get('id')
-    usuario = None
+
     cliente = None
     if id:
         cliente = get_object_or_404(Cliente, pk=id)
 
-    formu = UserForm(instance=usuario)
+
     form = ClienteForm(instance=cliente)  # instancia
     clientes = Cliente.objects.all().order_by('nombre', 'apellido')
-    return render(request, 'banco/clientes.html', {'form': form, 'formu': formu, 'clientes': clientes})
+    return render(request, 'banco/clientes.html', {'form': form, 'clientes': clientes})
 
 
 def clientes_gestion(request, id=None):
     if request.method == 'POST':
 
-        u = UserForm(request.POST)
+
         cliente = get_object_or_404(Cliente, pk=id) if id else None
         form = ClienteForm(request.POST, instance=cliente)
-
-
         # form.save() hará un update si la instancia es un objeto del cliente que se quiere actualizar
         # form.save() hará un insert si la instancia es nula (None)
 
         if form.is_valid():
             try:
+                u = User.objects.create_user(username=request.POST.get('username'), password=request.POST.get('password'))
                 u.save()
                 ultimo = User.objects.all().order_by('-id')
                 form.user = ultimo.first().id

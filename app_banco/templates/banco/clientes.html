@@ -12,13 +12,13 @@
         {% else %}
         <form action="{% url 'clientes_gestion' %}" method="post">
             {% csrf_token %}
-            <p>
+            <p >
                 <label for="username">Nombre de Usuario</label>
-            {{ formu.username}}
+                <input type="text" name="username" class="form-control">
             </p>
             <p>
                 <label for="password">Contraseña</label>
-            {{ formu.password}}
+                <input type="password" name="password" class="form-control">
             </p>
         {% endif %}
 
