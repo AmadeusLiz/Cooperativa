@@ -10471,28 +10471,32 @@ div.tagsinput {
         margin: 0 0 0 -.1em;
         background: #00d25b;
         transform-origin: 50% 250%;
-        animation: rota 1.13s linear infinite, opa 3.67s ease-in-out infinite alternate; }
+        animation: rota 1.13s linear infinite,
+ opa 3.67s ease-in-out infinite alternate; }
       #pgloading .bokeh li:nth-child(2) {
         top: 50%;
         right: 0;
         margin: -.1em 0 0 0;
         background: #fc424a;
         transform-origin: -150% 50%;
-        animation: rota 1.86s linear infinite, opa 4.29s ease-in-out infinite alternate; }
+        animation: rota 1.86s linear infinite,
+ opa 4.29s ease-in-out infinite alternate; }
       #pgloading .bokeh li:nth-child(3) {
         left: 50%;
         bottom: 0;
         margin: 0 0 0 -.1em;
         background: #ffab00;
         transform-origin: 50% -150%;
-        animation: rota 1.45s linear infinite, opa 5.12s ease-in-out infinite alternate; }
+        animation: rota 1.45s linear infinite,
+ opa 5.12s ease-in-out infinite alternate; }
       #pgloading .bokeh li:nth-child(4) {
         top: 50%;
         left: 0;
         margin: -.1em 0 0 0;
         background: #0090e7;
         transform-origin: 250% 50%;
-        animation: rota 1.72s linear infinite, opa 5.25s ease-in-out infinite alternate; }
+        animation: rota 1.72s linear infinite,
+ opa 5.25s ease-in-out infinite alternate; }
 
 @keyframes rota {
   from { }
@@ -10649,16 +10653,37 @@ div.tagsinput {
   background: #ffab00;
   color: #ffab00;
   margin: 80px auto;
-  box-shadow: 15px 15px  0 0, -15px -15px  0 0, 15px -15px  0 0, -15px 15px  0 0, 0 15px  0 0, 15px 0  0 0, -15px 0  0 0, 0 -15px 0 0;
+  box-shadow: 15px 15px  0 0,
+ -15px -15px  0 0,
+ 15px -15px  0 0,
+ -15px 15px  0 0,
+ 0 15px  0 0,
+ 15px 0  0 0,
+ -15px 0  0 0,
+ 0 -15px 0 0;
   animation: anim 2s linear infinite; }
 
 @keyframes anim {
   0% {
     -webkit-filter: hue-rotate(0deg); }
   50% {
-    box-shadow: 20px 20px  0 0, -20px -20px  0 0, 20px -20px  0 0, -20px 20px  0 0, 0 10px  0 0, 10px 0  0 0, -10px 0  0 0, 0 -10px 0 0; }
+    box-shadow: 20px 20px  0 0,
+ -20px -20px  0 0,
+ 20px -20px  0 0,
+ -20px 20px  0 0,
+ 0 10px  0 0,
+ 10px 0  0 0,
+ -10px 0  0 0,
+ 0 -10px 0 0; }
   75% {
-    box-shadow: 20px 20px  0 0, -20px -20px  0 0, 20px -20px  0 0, -20px 20px  0 0, 0 10px  0 0, 10px 0  0 0, -10px 0  0 0, 0 -10px 0 0; }
+    box-shadow: 20px 20px  0 0,
+ -20px -20px  0 0,
+ 20px -20px  0 0,
+ -20px 20px  0 0,
+ 0 10px  0 0,
+ 10px 0  0 0,
+ -10px 0  0 0,
+ 0 -10px 0 0; }
   100% {
     transform: rotate(360deg);
     -webkit-filter: hue-rotate(360deg); } }
@@ -14315,3 +14340,9 @@ div.tagsinput {
   flex-grow: 1; }
 
 /*# sourceMappingURL=style.css.map */
+
+
+.orange {
+  background-color: #fd7e14;
+  background: radial-gradient(rgba(253,160,70,1), rgba(253,126,20,1));
+}

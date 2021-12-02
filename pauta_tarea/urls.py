@@ -34,6 +34,7 @@ urlpatterns = [
     path('clientes/gestion/', views.clientes_gestion, name="clientes_gestion"),
     path('clientes/actualizar/<int:id>/', views.clientes_gestion, name="clientes_actualizar"),
     
+    path('solicitud_credito/', views.clientes_solicitud_credito, name="clientes_solicitud_credito"),
 
     path('admin/', admin.site.urls),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

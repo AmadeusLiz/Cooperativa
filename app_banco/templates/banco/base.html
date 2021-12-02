@@ -5,10 +5,10 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="shortcut icon" href="/static/assets/images/favicon.png" />
+    <link rel="shortcut icon" href="/static/seguridad/img/icon_color.ico" />
 
     <title>
-        Django Corona Dark - {% block title %}{% endblock %} | AppSeed
+        {% block title %}{% endblock %}
     </title>
 
     <link rel="stylesheet" href="/static/assets/vendors/mdi/css/materialdesignicons.min.css">
@@ -65,6 +65,14 @@
     <script src="/static/assets/js/settings.js"></script>
     <script src="/static/assets/js/todolist.js"></script>
     <!-- endinject -->
+    <script src="{% static 'banco/notify.min.js' %}"></script>
+    <script>
+        function notify (style, msg)
+        {
+            $.notify.defaults({ className: style });
+            $.notify(msg, {position: 'bottom'});
+        }
+    </script>
 
     <!-- Specific Page JS goes HERE  -->
     {% block javascripts %}{% endblock javascripts %}

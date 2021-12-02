@@ -152,12 +152,12 @@ class TransaccionHistorial(models.Model):
 class Credito(models.Model):
     monto = models.FloatField(default=500) # monto minimo 500, maximo 95% del monto de cuenta de aportaciones
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    estado = models.BooleanField(default=True)
     # https://stackoverflow.com/questions/849142/how-to-limit-the-maximum-value-of-a-numeric-field-in-a-django-model
     plazo_meses = models.IntegerField(default=6, validators=[
             MaxValueValidator(72),
             MinValueValidator(6)
         ])
-    fecha_solicitado = datetime.now()
-    # TypeError: unsupported operand type(s) for *: 'IntegerField' and 'int'
-    # fecha_finalizacion = fecha_solicitado + timedelta(weeks=(plazo_meses*4)) #https://parzibyte.me/blog/2020/04/23/sumar-restar-fechas-python/, https://j2logo.com/operaciones-con-fechas-en-python/
+    fecha_solicitado = models.DateTimeField(auto_now_add=True)
+    prestamo_activo = models.BooleanField(default=True) #tiene prestamo activo al solicitar por primera vez
+    fecha_finalizacion = models.DateTimeField() 
+    cuotaMensual = models.FloatField(null=True, blank=True)

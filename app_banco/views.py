@@ -6,10 +6,10 @@ from django.db import transaction
 from django.db.models import Sum, Q
 from django.core.mail import EmailMessage
 from django.urls import reverse
-from .models import Cuenta, Transaccion, Cliente
-from datetime import datetime
+from .models import Credito, Cuenta, Transaccion, Cliente
+from datetime import datetime, timedelta
 from .forms import ClienteForm, UserForm
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 
 def home(request):
@@ -265,7 +265,6 @@ def historial(request):
         if request.method == 'POST' and request.is_ajax():
             cuenta_id = request.POST.get('cbo-cuenta')
             cuenta = Cuenta.objects.get(pk=cuenta_id)
-            print(cuenta_id)
 
             # consultar las movimientos de la cuenta
             transacciones = Transaccion.objects.filter(Q(origen__id=cuenta_id) or Q(destino__id=cuenta_id)).order_by(
@@ -393,7 +392,6 @@ def clientes_gestion(request, id=None):
                 form.save()
 
                 t = Cliente.objects.all().order_by('-id').first()
-                print(t)
                 t.user_id = ultimo.first().id
                 t.save()
                 Cuenta.objects.create(cliente_id=t.id,tipo='1')
@@ -408,47 +406,73 @@ def clientes_gestion(request, id=None):
             clientes = Cliente.objects.all().order_by('nombre', 'apellido')
             return render(request, 'banco/clientes.html', {'form': form, 'clientes': clientes})
 
-def clientes_credito(request, id=None):
-    # id = request.GET.get('id')
-    # usuario = None
-    # cliente = None
-    # if id:
-    #     cliente = get_object_or_404(Cliente, pk=id)
+def clientes_solicitud_credito(request):
+    if request.method == 'POST' and request.is_ajax():
+        accion = request.POST.get('accion')
+        monto = float(request.POST.get('monto'))
+        plazo = int(request.POST.get('plazo'))
 
-    # formu = UserForm(instance=usuario)
-    # form = ClienteForm(instance=cliente)  # instancia
-    # clientes = Cliente.objects.all().order_by('nombre', 'apellido')
-    # return render(request, 'banco/clientes.html', {'form': form, 'formu': formu, 'clientes': clientes})
-    if request.method == 'POST':
+        if accion == 'confirmar':
+            return JsonResponse({'OK': True, 'msj': f'¿Desea solicitar el crédito de {monto} LPS con plazo de {plazo} meses?'})
 
-        u = UserForm(request.POST)
-        cliente = get_object_or_404(Cliente, pk=id) if id else None
-        form = ClienteForm(request.POST, instance=cliente)
+        else:
+            cliente = get_object_or_404(Cliente, pk=request.user.cliente.pk) # como obtener id del cliente? request.user.alumno.id
+            creditosCliente = Credito.objects.filter(cliente=request.user.cliente.pk) 
 
+            # No se puede solicitar otro prestamo teniendo uno activo.
+            for c in creditosCliente:
+                if c.prestamo_activo == True:
+                    return JsonResponse({'OK': False, 'msj': 'Para solicitar un crédito no debe tener créditos previos activos.'})
 
-        # form.save() hará un update si la instancia es un objeto del cliente que se quiere actualizar
-        # form.save() hará un insert si la instancia es nula (None)
-
-        if form.is_valid():
             try:
-                u.save()
-                ultimo = User.objects.all().order_by('-id')
-                form.user = ultimo.first().id
+                #https://parzibyte.me/blog/2020/04/23/sumar-restar-fechas-python/, https://j2logo.com/operaciones-con-fechas-en-python/
+                fecha_finalizacion = datetime.now() +  timedelta(weeks=plazo * 4.34524) 
 
-                form.save()
+                # Verificar si hay fondos disponibles para préstamos
+                cuentaCooperativa = Cuenta.objects.get(pk = 5) # La cuenta de la cooperativa debe ser la 1 
+                if ((cuentaCooperativa.saldo - monto) < monto):
+                    return JsonResponse({'OK': False, 'msj': 'Lamentamos los inconvenientes, los fondos para préstamos no están disponibles en estos momentos.'})
 
-                t = Cliente.objects.all().order_by('-id').first()
-                print(t)
-                t.user_id = ultimo.first().id
-                t.save()
-                Cuenta.objects.create(cliente_id=t.id,tipo='1')
-                Cuenta.objects.create(cliente_id=t.id, tipo='2')
-                messages.add_message(request, messages.SUCCESS, f'Socio añadido con exito')
+                cuentaClienteRetirables = Cuenta.objects.get(cliente__id = request.user.cliente.pk, tipo = 2) # cuenta de aportaciones
+
+                # Verificar que el monto solicitado no sea mayor al 95% de aportaciones
+                cuentaClienteAportaciones = Cuenta.objects.filter(cliente__id = request.user.cliente.pk, tipo = 1).first() # cuenta de aportaciones
+
+                if (not cuentaClienteAportaciones and monto > 500):
+                    return JsonResponse({'OK': False, 'msj': 'Su monto disponible para préstamos es de 500 LPS, ya que no tiene cuenta de tipo Aportaciones.'})
+                if (cuentaClienteAportaciones and monto > 500):
+                    if (monto > (cuentaClienteAportaciones.saldo * 0.95)):
+                        return JsonResponse({'OK': False, 'msj': 'El monto excede el límite según su saldo en cuenta de aportaciones. Su monto disponible para préstamos es de 500 LPS'})
+
+                
+                interesMensual = (0.11/12)
+                cuotaMensual = round(((monto * interesMensual)/(1-(1+interesMensual)**-12)),2)
+
+                with transaction.atomic():
+                    # acreditar a la cuenta de retirables del cliente
+                    cuentaClienteRetirables.saldo += monto
+                    cuentaClienteRetirables.save()
+
+                    # debitar a la cuenta de la cooperativa
+                    cuentaCooperativa.saldo -= monto
+                    cuentaCooperativa.save()
+                    
+                   
+                    # Creacion del credito
+                    Credito.objects.create(monto=monto, cliente=cliente, plazo_meses=plazo, fecha_finalizacion = fecha_finalizacion, cuotaMensual = cuotaMensual)
+
+                    # registrar el movimiento 
+                    Transaccion.objects.create(
+                        movimiento='3',  # Transferencia
+                        origen=cuentaCooperativa,
+                        destino=cuentaClienteRetirables,
+                        monto=float(monto),
+                        comentario=f'Préstamo {monto} LPS a {plazo} meses, cuenta #{cuentaClienteRetirables.pk}, cuota mensual {cuotaMensual} LPS'
+                    )                    
+                
+                return JsonResponse({'OK': True, 'msj': f'Su préstamo se ha acreditado con éxito. La cuota mensual a pagar es de {cuotaMensual} LPS'})
             except Exception as e:
-                messages.add_message(request, messages.ERROR, f'El nombre de usuario ya existe')
                 print(e)
+                return JsonResponse({'OK': False, 'msj': 'Ocurrió un error en la solicitud de su crédito.'})
 
-            return redirect(reverse('clientes_view'))
-        else:
-            clientes = Cliente.objects.all().order_by('nombre', 'apellido')
-            return render(request, 'banco/clientes.html', {'form': form, 'clientes': clientes})
+    return render(request, 'banco/creditos.html')

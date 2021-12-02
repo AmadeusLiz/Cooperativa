@@ -70,4 +70,29 @@
 
         </ul>
       </nav>
-      {% endif %}
+{% else %}
+<nav class="sidebar sidebar-offcanvas" id="sidebar">
+  <div class="sidebar-brand-wrapper d-none d-lg-flex align-items-center justify-content-center fixed-top">
+    <a class="sidebar-brand brand-logo" href="{% url 'index_view' %}"><img src="/static/seguridad/img/logo_white.png" alt="logo" style="width:75%; height: 75%" /></a>
+    <a class="sidebar-brand brand-logo-mini" href="{% url 'index_view' %}"><img src="/static/seguridad/img/white_icon.png" alt="logo" style="width:75%; height: 75%"/></a>
+  </div>
+  <ul class="nav">
+    <li class="nav-item menu-items">
+      <a class="nav-link" href="{% url 'index_view' %}"> 
+        <span class="menu-icon">
+          <i class="mdi mdi-speedometer"></i>
+        </span>
+        <span class="menu-title">Transferencias</span>
+      </a>
+    </li>
+    <li class="nav-item menu-items">
+      <a class="nav-link" href="{% url 'clientes_solicitud_credito' %}">
+        <span class="menu-icon">
+          <i class="mdi mdi-speedometer"></i>
+        </span>
+        <span class="menu-title">Créditos</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
