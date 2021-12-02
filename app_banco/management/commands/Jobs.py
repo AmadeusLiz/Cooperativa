@@ -17,18 +17,22 @@ logger = logging.getLogger(__name__)
 def my_job():
     # Your job processing logic here...
     c =  Cuenta.objects.all()
+    cuenta_origen = Cuenta.objects.filter(id=3).first()
     print(c)
     for p in c:
-        interes= p.saldo*0.05
-        p.saldo=p.saldo+interes
-        p.save()
-        Transaccion.objects.create(
-            movimiento='3',  # Transferencia
-            origen=p,
-            destino=p,
-            monto=float(interes),
-            comentario='Interes mensual'
-        )
+        if p.id is not 3 and p.id is not 4:
+            interes= p.saldo*0.05
+            cuenta_origen.saldo -= interes
+            cuenta_origen.save()
+            p.saldo+=interes
+            p.save()
+            Transaccion.objects.create(
+                movimiento='3',  # Transferencia
+                origen=cuenta_origen,
+                destino=p,
+                monto=float(interes),
+                comentario='Interes mensual'
+            )
     c = Cuenta.objects.all()
     print(c)
 
