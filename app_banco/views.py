@@ -12,6 +12,7 @@ from .forms import ClienteForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 
+
 def home(request):
     if request.is_ajax() and request.method == 'POST':
         accion = request.POST.get('cbo-transaccion')
@@ -265,15 +266,18 @@ def historial(request):
         if request.method == 'POST' and request.is_ajax():
             cuenta_id = request.POST.get('cbo-cuenta')
             cuenta = Cuenta.objects.get(pk=cuenta_id)
-            print(cuenta_id)
 
             # consultar las movimientos de la cuenta
             transacciones = Transaccion.objects.filter(Q(origen__id=cuenta_id) or Q(destino__id=cuenta_id)).order_by(
                 '-fecha')
-
+            ttt = Transaccion.objects.filter(movimiento='3', destino_id=cuenta_id).order_by('-fecha')
+            tttt = Transaccion.objects.filter(movimiento='3', origen_id=cuenta_id).order_by('-fecha')
             sum_depositos = transacciones.filter(movimiento='1').aggregate(t=Sum('monto'))['t']
             sum_retiros = transacciones.filter(movimiento='2').aggregate(t=Sum('monto'))['t']
-            saldo_actual  = sum_depositos - (sum_retiros if sum_retiros is not None else 0)
+            saldo_actual = sum_depositos - (sum_retiros if sum_retiros is not None else 0)
+            sum_trans_cred = ttt.filter(movimiento='3').aggregate(t=Sum('monto'))['t']
+            sum_trans_deb = tttt.filter(movimiento='3').aggregate(t=Sum('monto'))['t']
+            print(sum_trans_cred)
 
             if not transacciones:
                 html = '<div class="alert alert-danger">No hay movimientos para esta cuenta</div>'
@@ -281,6 +285,7 @@ def historial(request):
 
             tr = ''
             for trans in transacciones:
+                print(trans)
                 if trans.movimiento == '1':  # Depositos
                     tr += f'''
                         <tr>
@@ -301,30 +306,30 @@ def historial(request):
                         </tr>
                     '''
 
-                else:  # Transferencias
-                    if cuenta == trans.origen:
-                        # la cuenta está en el campo origen: debito por transferencia
-                        tr += f'''
-                            <tr>
-                                <td>{trans.fecha}</td>
-                                <td>Débito por tranf.</td>
-                                <td class="text-danger text-end">{trans.monto}</td>
-                                <td>-</td>
-                            </tr>
-                        '''
-                    else:
-                        # la cuenta está en el campo destino: credito por transferencia
-                        tr += f'''
-                            <tr>
-                                <td>{trans.fecha}</td>
-                                <td>Crédito por tranf.</td>
-                                <td>-</td>
-                                <td class="text-success text-end">{trans.monto}</td>
-                            </tr>
-                        '''
+            for t in ttt:
+                # la cuenta está en el campo destino: credito por transferencia
+                tr += f'''
+                        <tr>
+                            <td>{t.fecha}</td>
+                            <td>{t.comentario if t.comentario is not None else 'Crédito por tranf.'}</td>
+                            <td>-</td>
+                            <td class="text-success text-end">{t.monto}</td>
+                        </tr>
+                    '''
+            for t in tttt:
+                # la cuenta está en el campo origen: debito por transferencia
+
+                tr += f'''
+                        <tr>
+                            <td>{t.fecha}</td>
+                            <td>{t.comentario if t.comentario is not None else 'Débito por tranf.'}</td>
+                            <td class="text-danger text-end">{t.monto}</td>
+                            <td>-</td>
+                        </tr>
+                    '''
 
             color_saldo_actual = 'text-danger' if saldo_actual <= 0 else 'text-success'
-
+            print(tr)
             html = f'''
                 <table class="table table-bordered table-striped table-hover">
                     <thead>
@@ -340,8 +345,8 @@ def historial(request):
                         <tr>
                             <th class="table-secondary"></th>
                             <th class="table-secondary"></th>
-                            <th class="table-secondary text-danger text-end">{sum_retiros if sum_retiros is not None else 0}</th>
-                            <th class="table-secondary text-success text-end">{sum_depositos}</th>
+                            <th class="table-secondary text-danger text-end">{sum_trans_deb + sum_retiros if sum_retiros is not None else 0}</th>
+                            <th class="table-secondary text-success text-end">{sum_depositos + sum_trans_cred}</th>
                         </tr>
                         <tr>
                             <th class="table-dark"></th>
@@ -367,7 +372,6 @@ def clientes_view(request):
     if id:
         cliente = get_object_or_404(Cliente, pk=id)
 
-
     form = ClienteForm(instance=cliente)  # instancia
     clientes = Cliente.objects.all().order_by('nombre', 'apellido')
     return render(request, 'banco/clientes.html', {'form': form, 'clientes': clientes})
@@ -376,7 +380,6 @@ def clientes_view(request):
 def clientes_gestion(request, id=None):
     if request.method == 'POST':
 
-
         cliente = get_object_or_404(Cliente, pk=id) if id else None
         form = ClienteForm(request.POST, instance=cliente)
         # form.save() hará un update si la instancia es un objeto del cliente que se quiere actualizar
@@ -384,7 +387,8 @@ def clientes_gestion(request, id=None):
 
         if form.is_valid():
             try:
-                u = User.objects.create_user(username=request.POST.get('username'), password=request.POST.get('password'))
+                u = User.objects.create_user(username=request.POST.get('username'),
+                                             password=request.POST.get('password'))
                 u.save()
                 ultimo = User.objects.all().order_by('-id')
                 form.user = ultimo.first().id
@@ -395,7 +399,7 @@ def clientes_gestion(request, id=None):
                 print(t)
                 t.user_id = ultimo.first().id
                 t.save()
-                Cuenta.objects.create(cliente_id=t.id,tipo='1')
+                Cuenta.objects.create(cliente_id=t.id, tipo='1')
                 Cuenta.objects.create(cliente_id=t.id, tipo='2')
                 messages.add_message(request, messages.SUCCESS, f'Socio añadido con exito')
             except Exception as e:

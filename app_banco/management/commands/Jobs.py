@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 def my_job():
     # Your job processing logic here...
     c =  Cuenta.objects.all()
-    cuenta_origen = Cuenta.objects.filter(id=3).first()
+    cuenta_origen = Cuenta.objects.filter(id=1).first()
     print(c)
     for p in c:
-        if p.id is not 3 and p.id is not 4:
+        if p.id is not 1 and p.id is not 2:
             interes= p.saldo*0.05
             cuenta_origen.saldo -= interes
             cuenta_origen.save()
@@ -33,8 +33,8 @@ def my_job():
                 monto=float(interes),
                 comentario='Interes mensual'
             )
-    c = Cuenta.objects.all()
-    print(c)
+
+    print(Transaccion.objects.all())
 
 
 
