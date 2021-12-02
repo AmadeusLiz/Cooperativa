@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'app_banco',
     'app_seguridad',
+    'django_apscheduler',
 ]
 
 MIDDLEWARE = [

@@ -145,3 +145,4 @@ class TransaccionHistorial(models.Model):
     monto = models.FloatField(null=True, blank=True)
     comentario = models.TextField(null=True, blank=True)
     accion = models.CharField(max_length=1, choices=ACCIONES)
+
