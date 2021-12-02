@@ -14346,3 +14346,7 @@ div.tagsinput {
   background-color: #fd7e14;
   background: radial-gradient(rgba(253,160,70,1), rgba(253,126,20,1));
 }
+
+.orangeText {
+  color: rgb(253,126,20)
+}

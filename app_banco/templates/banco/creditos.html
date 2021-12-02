@@ -23,7 +23,7 @@
                 <input type="number" min="6" max="72" id="txt-plazo" class="form-control">
             </div>
 
-            <button data-csrf="{{ csrf_token }}" data-url="{% url 'clientes_solicitud_credito' %}" data-accion="confirmar" class="btn btn-success mt-3 btn-solicitar ">Solicitar Crédito</button>
+            <button data-csrf="{{ csrf_token }}" data-url="{% url 'clientes_solicitud_credito' %}" data-accion="confirmar" class="btn orange mt-3 btn-solicitar ">Solicitar Crédito</button>
             
             <hr>
             <h3>NOTAS</h3>
@@ -53,7 +53,7 @@
                 <div class="modal-body"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Salir</button>
-                    <button type="button" data-csrf="{{ csrf_token }}" data-url="{% url 'clientes_solicitud_credito' %}" data-accion="finalizar" class="btn btn-primary btn-solicitar">Finalizar</button>
+                    <button type="button" data-csrf="{{ csrf_token }}" data-url="{% url 'clientes_solicitud_credito' %}" data-accion="finalizar" class="btn orange btn-solicitar">Finalizar</button>
                 </div>
             </div>
         </div>

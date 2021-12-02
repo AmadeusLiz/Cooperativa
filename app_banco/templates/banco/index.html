@@ -42,7 +42,7 @@
 
                 <!-- Boton que realiza la acción  -->
                 <p>
-                    <button type="submit" class="btn btn-primary">Realizar movimiento</button>                    
+                    <button type="submit" class="btn orange">Realizar movimiento</button>                    
                 </p>
             </form>
 
@@ -53,7 +53,7 @@
     {% else %}
     <div class="row mt-3">
         <div class="col-12 offset-md-3 col-md-6">
-            <h3>Transferencia</h3>
+            <h3 >Transferencia</h3>
             <hr>
 
             <div>
@@ -87,7 +87,7 @@
                 <textarea id="txt-comentario" class="form-control" rows="3" placeholder="Opcional"></textarea>
             </div>
 
-            <button data-csrf="{{ csrf_token }}" data-url="{% url 'transferencias_view' %}" data-accion="confirmar" class="btn btn-success mt-3 btn-transferir">Confirmar transferencia</button>
+            <button data-csrf="{{ csrf_token }}" data-url="{% url 'transferencias_view' %}" data-accion="confirmar" class="btn orange mt-3 btn-transferir">Confirmar transferencia</button>
         </div>
     </div>
     {% endif %}
@@ -104,7 +104,7 @@
                 <div class="modal-body"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Salir</button>
-                    <button type="button" data-csrf="{{ csrf_token }}" data-url="{% url 'transferencias_view' %}" data-accion="finalizar" class="btn btn-primary btn-transferir">Finalizar</button>
+                    <button type="button" data-csrf="{{ csrf_token }}" data-url="{% url 'transferencias_view' %}" data-accion="finalizar" class="btn orange btn-transferir">Finalizar</button>
                 </div>
             </div>
         </div>
