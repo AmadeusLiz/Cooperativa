@@ -1,0 +1,140 @@
+{% extends 'banco/base.html' %}
+
+{% block title %} Solicitud de Crédito {% endblock %}
+
+
+{% block container %}
+    <div class="row mt-3">
+        <div class="col-12 offset-md-2 col-md-8">
+            <h3>Solicitud de Préstamo</h3>
+            <p>
+               Cooperativa Ordoñez provee a sus afiliados la opción de un préstamo automático, para que estos puedan acceder a los fondos disponibles sin ningún tipo de requerimiento y desde la comodidad de sus hogares.
+               Este se acredita automáticamente luego de ser solicitado a la cuenta de retirables del afiliado(a), puede ser solicitado siempre y cuando no tenga previamente algún préstamo activo.
+            </p>
+            <hr>
+
+            <div class="mt-3">
+                <label for="txt-monto">Monto de crédito</label>
+                <input type="number" min="500" id="txt-monto" class="form-control" >
+            </div>
+
+            <div class="mt-3">
+                <label for="txt-plazo">Plazo de pago en meses</label>
+                <input type="number" min="6" max="72" id="txt-plazo" class="form-control">
+            </div>
+
+            <button data-csrf="{{ csrf_token }}" data-url="{% url 'clientes_solicitud_credito' %}" data-accion="confirmar" class="btn orange mt-3 btn-solicitar ">Solicitar Crédito</button>
+            
+            <hr>
+            <h3>NOTAS</h3>
+            <p>
+                Los montos disponibles para los préstamos son:<br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp <span class="font-weight-bold">Mínimo:</span> L. 500.00<br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp <span class="font-weight-bold">Máximo:</span> 95% del monto de las aportaciones del Afiliado(a).
+            </p>
+            <p>
+                Los plazos disponibles para los préstamos son:<br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp <span class="font-weight-bold">Mínimo:</span> 6 meses<br>
+                &nbsp&nbsp&nbsp&nbsp&nbsp <span class="font-weight-bold">Máximo:</span> 72 meses.
+            </p>
+
+            <p class="font-weight-bold">**La tasa de interés para los préstamos es de 11.00% anual</p>
+        </div>
+    </div>
+
+    <!-- Ventana modal con la informacion de confirmacion -->
+    <div class="modal fade" id="finalizarSolicitudModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Finalizar la solicitud</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Salir</button>
+                    <button type="button" data-csrf="{{ csrf_token }}" data-url="{% url 'clientes_solicitud_credito' %}" data-accion="finalizar" class="btn orange btn-solicitar">Finalizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+<script>
+    $(function () {
+
+        $('.btn-solicitar').on('click', function () {
+            var $btn   = $(this),
+                url    = $btn.data('url'),
+                csrf   = $btn.data('csrf'),
+                accion = $btn.data('accion'),
+                $txtMonto   = $('#txt-monto'),
+                $txtPlazo   = $('#txt-plazo'),
+                ctx = {
+                    'csrfmiddlewaretoken': csrf,
+                    'accion': accion,
+                    'cuenta-origen': 1,
+                    'cuenta-destino': 2, // $txtDestino.val()
+                    'monto': $txtMonto.val(),
+                    'plazo': $txtPlazo.val(),
+                };
+
+                if (accion === 'confirmar')
+                {
+
+                    if (!$txtMonto.val().trim() || isNaN($txtMonto.val().trim()))
+                    {
+                        notify('error', 'El monto a solicitar es mínimo de 500LPS y máximo el 95% de su cuenta de aportaciones');
+                        $txtMonto.focus();
+                        return;
+                    }
+
+                    if ($txtMonto.val() < 500)
+                    {
+                        notify('error', 'El monto ingresado debe ser mayor o igual a 500.');
+                        $txtMonto.val('').focus();
+                        return;
+                    }
+
+                    if (!$txtPlazo.val().trim() || isNaN($txtPlazo.val().trim()))
+                    {
+                        notify('error', 'Dato inválido. Por favor ingrese un plazo de 6 a 72 meses');
+                        $txtPlazo.focus();
+                        return;
+                    }
+
+                    if ($txtPlazo.val() < 6 || $txtPlazo.val() > 72)
+                    {
+                        notify('error', 'El plazo ingresado debe ser un valor entre 6-72 (meses)');
+                        $txtPlazo.val('').focus();
+                        return;
+                    }
+
+                    $.post(url, ctx, function (response) {
+                        if (response.color == 'error')
+                        {
+                            notify(response.color, response.msj);
+                            return;
+                        }
+
+                        $('#finalizarSolicitudModal').find('.modal-body').html(response.msj);
+                        $('#finalizarSolicitudModal').modal('show');
+                    }, 'json');
+                } else { 
+                    // finalizar
+                    $.post(url, ctx, function(response) {
+                        if (response.OK)
+                        {
+                            alert(response.msj);
+                            $('#finalizarSolicitudModal').find('.modal-body').empty();
+                            $('#finalizarSolicitudModal').modal('hide');
+                        } else {
+                            notify('error', response.msj);
+                        }
+                    }, 'json');
+                }
+        });
+    });
+</script>
+{% endblock %}

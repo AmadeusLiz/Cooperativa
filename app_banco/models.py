@@ -1,6 +1,8 @@
-from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import User
-
+from django.db import models
+from datetime import datetime
+from datetime import timedelta
 
 # Nombre, Apellido, Dirección, Fecha de nacimiento, Teléfono y Correo
 class Cliente(models.Model):
@@ -146,3 +148,16 @@ class TransaccionHistorial(models.Model):
     comentario = models.TextField(null=True, blank=True)
     accion = models.CharField(max_length=1, choices=ACCIONES)
 
+
+class Credito(models.Model):
+    monto = models.FloatField(default=500) # monto minimo 500, maximo 95% del monto de cuenta de aportaciones
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    # https://stackoverflow.com/questions/849142/how-to-limit-the-maximum-value-of-a-numeric-field-in-a-django-model
+    plazo_meses = models.IntegerField(default=6, validators=[
+            MaxValueValidator(72),
+            MinValueValidator(6)
+        ])
+    fecha_solicitado = models.DateTimeField(auto_now_add=True)
+    prestamo_activo = models.BooleanField(default=True) #tiene prestamo activo al solicitar por primera vez
+    fecha_finalizacion = models.DateTimeField()
+    cuotaMensual = models.FloatField(null=True, blank=True)
