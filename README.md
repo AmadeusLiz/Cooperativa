@@ -19,3 +19,4 @@ de nuevo al ejecutar el migrate de todos modos
 ## Dependencias
 
 ### Django `pip install django`
+### Apscheduler `pip install django-apscheduler`
