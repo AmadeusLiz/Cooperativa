@@ -1,20 +1,18 @@
+from datetime import datetime
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponse, Http404
+from django.core.mail import EmailMessage
 from django.db import transaction
 from django.db.models import Sum, Q
-from django.core.mail import EmailMessage
+from django.http import JsonResponse, Http404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from .models import Credito, Cuenta, Transaccion, Cliente
-from datetime import datetime, timedelta
-from .forms import ClienteForm, UserForm
-from django.contrib.auth import login, update_session_auth_hash
-from .models import Cuenta, Transaccion, Cliente
-from datetime import datetime
+
 from .forms import ClienteForm
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.forms import PasswordChangeForm
+from .models import Credito
+from .models import Cuenta, Transaccion, Cliente
 
 
 def home(request):
