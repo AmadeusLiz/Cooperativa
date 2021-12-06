@@ -9,7 +9,8 @@ from django.core.management.base import BaseCommand
 from django_apscheduler.jobstores import DjangoJobStore
 from django_apscheduler.models import DjangoJobExecution
 from django_apscheduler import util
-from app_banco.models import Cuenta, Transaccion
+from app_banco.models import Cuenta, Transaccion, Credito
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,35 @@ def my_job():
 
     print(Transaccion.objects.all())
 
+def cobros_job():
+    # Your job processing logic here...
+    creditos =  Credito.objects.filter(prestamo_activo = True)
+    hoy = datetime.now(timezone.utc)
+    cuentaCooperativa = Cuenta.objects.get(pk = 5) # La cuenta de la cooperativa debe ser la 1
+    
+    for c in creditos:
+        resta = c.fecha_finalizacion - hoy
+
+        # si la resta en dias es mayor a 0 todavia no ha finalizado el prestamo, debe cobrarse el monto mensual, si es negativo ya no se cobra y pasa a estar inactivo el prestamo
+        if resta.days > 0:
+            cuentaClienteRetirables = Cuenta.objects.get(cliente__id = c.cliente.pk, tipo = 2)
+            cuentaClienteRetirables.saldo -= c.cuotaMensual
+            cuentaClienteRetirables.save()
+
+            cuentaCooperativa.saldo += c.cuotaMensual
+            cuentaCooperativa.save()
+
+            Transaccion.objects.create(
+                movimiento='3',  # Transferencia
+                origen=cuentaClienteRetirables,
+                destino=cuentaCooperativa,
+                monto=float(c.cuotaMensual),
+                comentario=f'Pago de cuota de préstamo #{c.pk} - asociado #{c.cliente.pk} '
+            )
+            print('COBRO DE CUOTA MENSUAL DE PRESTAMO')
+        else: 
+            c.prestamo_activo = False
+            c.save()
 
 
 # The `close_old_connections` decorator ensures that database connections, that have become
@@ -69,6 +99,15 @@ class Command(BaseCommand):
         )
         logger.info("Added job 'my_job'.")
 
+        scheduler.add_job(
+            cobros_job,
+            trigger=CronTrigger(second="*/59"),  # Every 60 seconds
+            id="cobros_job",  # The `id` assigned to each job MUST be unique
+            max_instances=1,
+            replace_existing=True,
+        )
+        logger.info("Added job 'cobros_job'.")
+        
         scheduler.add_job(
             delete_old_job_executions,
             trigger=CronTrigger(
