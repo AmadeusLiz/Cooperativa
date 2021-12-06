@@ -1,5 +1,4 @@
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -9,10 +8,8 @@ from django.db.models import Sum, Q
 from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-
 from .forms import ClienteForm
-from .models import Credito
-from .models import Cuenta, Transaccion, Cliente
+from .models import Cuenta, Transaccion, Cliente, Credito
 
 
 def home(request):
@@ -435,7 +432,7 @@ def clientes_solicitud_credito(request):
                 fecha_finalizacion = datetime.now() +  timedelta(weeks=plazo * 4.34524)
 
                 # Verificar si hay fondos disponibles para préstamos
-                cuentaCooperativa = Cuenta.objects.get(pk = 5) # La cuenta de la cooperativa debe ser la 1
+                cuentaCooperativa = Cuenta.objects.get(pk = 1) # La cuenta de la cooperativa debe ser la 1
                 if ((cuentaCooperativa.saldo - monto) < monto):
                     return JsonResponse({'OK': False, 'msj': 'Lamentamos los inconvenientes, los fondos para préstamos no están disponibles en estos momentos.'})
 
