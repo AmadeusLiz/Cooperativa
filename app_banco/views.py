@@ -273,7 +273,7 @@ def historial(request):
             tttt = Transaccion.objects.filter(movimiento='3', origen_id=cuenta_id).order_by('-fecha')
             sum_depositos = transacciones.filter(movimiento='1').aggregate(t=Sum('monto'))['t']
             sum_retiros = transacciones.filter(movimiento='2').aggregate(t=Sum('monto'))['t']
-            saldo_actual = sum_depositos - (sum_retiros if sum_retiros is not None else 0)
+            saldo_actual = (sum_depositos if sum_depositos is not None else 0) - (sum_retiros if sum_retiros is not None else 0)
             sum_trans_cred = ttt.filter(movimiento='3').aggregate(t=Sum('monto'))['t']
             sum_trans_deb = tttt.filter(movimiento='3').aggregate(t=Sum('monto'))['t']
             print(sum_trans_cred)
@@ -284,7 +284,7 @@ def historial(request):
 
             tr = ''
             for trans in transacciones:
-                print(trans)
+
                 if trans.movimiento == '1':  # Depositos
                     tr += f'''
                         <tr>
@@ -344,8 +344,8 @@ def historial(request):
                         <tr>
                             <th class="table-secondary"></th>
                             <th class="table-secondary"></th>
-                            <th class="table-secondary text-danger text-end">{sum_trans_deb + sum_retiros if sum_retiros is not None else 0}</th>
-                            <th class="table-secondary text-success text-end">{sum_depositos + sum_trans_cred}</th>
+                            <th class="table-secondary text-danger text-end">{(sum_trans_deb if sum_trans_deb is not None else 0) + (sum_retiros if sum_retiros is not None else 0)}</th>
+                            <th class="table-secondary text-success text-end">{(sum_depositos if sum_depositos is not None else 0) + (sum_trans_cred if sum_trans_cred is not None else 0)}</th>
                         </tr>
                         <tr>
                             <th class="table-dark"></th>

@@ -30,7 +30,7 @@
         </form>
     </div>
     <div class="col-8">
-        <table class="table table-sm table-hover table-striped">
+        <table class="table table-sm table-hover table-striped ">
             <thead>
                 <tr>
                     <th>Nombre</th>
@@ -41,9 +41,9 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody >
             {% for cli in clientes %}
-                <tr>
+                <tr class="text-light">
                     <td>{{ cli.nombre }}</td>
                     <td>{{ cli.apellido }}</td>
                     <td>{{ cli.fecha_nacimiento }}</td>
